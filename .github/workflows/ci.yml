@@ -1,0 +1,59 @@
+# ============================================================
+# CI/CD 演示流水线 — GitHub Actions
+# 文件位置: .github/workflows/ci.yml
+# 触发条件: 每次 push 到 main 分支 或 发起 Pull Request
+# ============================================================
+
+name: CI/CD Pipeline
+
+on:
+  # --- 触发1: 代码推送到 main 分支时自动运行 ---
+  push:
+    branches: [main]
+
+  # --- 触发2: 有人对 main 分支提 Pull Request 时运行 ---
+  pull_request:
+    branches: [main]
+
+# ============================================================
+# Job 1: 持续集成 (CI) — 构建 + 测试 + 代码检查
+# ============================================================
+jobs:
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest            # GitHub 提供的虚拟机（免费）
+
+    steps:
+      # 步骤1: 拉取代码
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 步骤2: 安装 Node.js 运行环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 步骤3: 安装项目依赖（相当于 npm install）
+      - name: Install Dependencies
+        run: npm install
+
+      # 步骤4: 代码风格检查（Lint）
+      - name: Run Linter
+        run: npm run lint
+
+      # 步骤5: 运行项目构建
+      - name: Build Project
+        run: npm run build
+
+      # 步骤6: 运行自动化测试（带覆盖率报告）
+      - name: Run Tests
+        run: npm test
+
+      # 步骤7: 上传覆盖率报告（可选，方便在 GitHub 上查看）
+      - name: Upload Coverage Report
+        if: always()                    # 即使测试失败也上传，便于排查
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/

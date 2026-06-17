@@ -1,0 +1,16 @@
+{
+  "name": "ci-cd-demo",
+  "version": "1.0.0",
+  "description": "CI/CD demo project with GitHub Actions",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --coverage",
+    "lint": "eslint src/",
+    "build": "echo 'Build complete'"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "jest": "^29.7.0"
+  }
+}
