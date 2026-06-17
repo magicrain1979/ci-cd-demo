@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub 核心操作完全指南</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f6f8fa; --bg3: #f0f2f5;
+    --text: #1f2328; --text2: #656d76;
+    --border: #d0d7de; --blue: #0969da; --blue-bg: #ddf4ff;
+    --green: #1a7f37; --green-bg: #dafbe1;
+    --purple: #8250df; --purple-bg: #fbefff;
+    --orange: #bf8700; --orange-bg: #fff8c5;
+    --red: #cf222e; --red-bg: #ffebe9;
+    --code-bg: #f6f8fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 32px 24px;
+  }
+  h1 { font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; }
+  p { margin: 8px 0; color: var(--text2); }
+  .subtitle { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+
+  .feature-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin: 16px 0;
+  }
+  .feature-card h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-issue { background: var(--green-bg); color: var(--green); }
+  .badge-pr { background: var(--purple-bg); color: var(--purple); }
+  .badge-ci { background: var(--orange-bg); color: var(--orange); }
+  .badge-repo { background: var(--blue-bg); color: var(--blue); }
+  .badge-other { background: #efefef; color: #656d76; }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 16px; overflow-x: auto;
+    font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 13px; line-height: 1.5; margin: 8px 0;
+  }
+  code { font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre code { background: none; padding: 0; }
+
+  .step { display: flex; gap: 12px; margin: 12px 0; }
+  .step-num {
+    flex-shrink: 0; width: 24px; height: 24px; background: var(--blue);
+    color: white; border-radius: 50%; text-align: center;
+    font-size: 13px; font-weight: 600; line-height: 24px;
+  }
+
+  .tip {
+    background: var(--blue-bg); border-left: 3px solid var(--blue);
+    padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0;
+    font-size: 13px;
+  }
+  .warn {
+    background: var(--orange-bg); border-left: 3px solid var(--orange);
+    padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0;
+    font-size: 13px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg2); font-weight: 600; }
+
+  .tabs { display: flex; gap: 4px; margin: 16px 0 0; border-bottom: 2px solid var(--border); }
+  .tab-btn {
+    padding: 8px 16px; border: none; background: none; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text2);
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab-content { display: none; padding-top: 12px; }
+  .tab-content.active { display: block; }
+
+  .flow-box {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin: 16px 0; padding: 16px; background: var(--bg2);
+    border-radius: 8px; border: 1px solid var(--border); font-size: 13px;
+  }
+  .flow-node {
+    background: white; border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 14px; font-weight: 500; white-space: nowrap;
+  }
+  .flow-arrow { color: var(--text2); font-size: 16px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>GitHub 核心操作完全指南</h1>
+<p class="subtitle">以 ci-cd-demo 项目为实例，零基础到能干活</p>
+
+<div class="flow-box">
+  <span class="flow-node" style="border-color:#0969da;color:#0969da;">Issue 提需求</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node" style="border-color:#8250df;color:#8250df;">Branch 开分支</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node">Commit 提交</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node" style="border-color:#8250df;color:#8250df;">Pull Request</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node" style="border-color:#bf8700;color:#bf8700;">Actions CI</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node" style="border-color:#1a7f37;color:#1a7f37;">Merge 合并</span>
+</div>
+
+<!-- ============ SECTION 1: REPO ============ -->
+<h2>一、仓库 (Repository)</h2>
+<p>仓库就是项目的"家"。所有代码、文档、Issue、PR 都住在这里。你的演示仓库地址：<code>https://github.com/magicrain1979/ci-cd-demo</code></p>
+
+<div class="feature-card">
+  <h3><span class="badge badge-repo">repo</span> 克隆与本地操作</h3>
+
+  <h3>1.1 克隆仓库到本地</h3>
+  <pre><code># HTTPS 方式（推荐新手）
+git clone https://github.com/magicrain1979/ci-cd-demo.git
+
+# 进入项目
+cd ci-cd-demo</code></pre>
+
+  <h3>1.2 日常提交三部曲</h3>
+  <pre><code># 1. 看改了哪些文件
+git status
+
+# 2. 暂存改动
+git add .                     # 添加所有改动
+git add src/index.js          # 或只添加某个文件
+
+# 3. 提交（写清楚干了什么）
+git commit -m "feat: 添加除法运算的除零保护"
+
+# 4. 推送到 GitHub
+git push</code></pre>
+
+  <div class="tip">
+    <strong>提交信息规范</strong>：<code>feat:</code> 新功能 / <code>fix:</code> 修 bug / <code>docs:</code> 文档 / <code>test:</code> 测试 / <code>chore:</code> 杂项
+  </div>
+
+  <h3>1.3 分支操作（核心技能）</h3>
+  <pre><code># 创建并切换到新分支
+git checkout -b feature/add-multiply
+
+# 查看所有分支
+git branch -a
+
+# 切回主分支
+git checkout master
+
+# 推送新分支到 GitHub
+git push -u origin feature/add-multiply
+
+# 删除已合并的本地分支
+git branch -d feature/add-multiply</code></pre>
+
+  <h3>1.4 同步与拉取</h3>
+  <pre><code># 拉取远程最新代码
+git pull
+
+# 拉取所有远程分支信息
+git fetch
+
+# 强制覆盖本地（慎用！）
+git reset --hard origin/master</code></pre>
+</div>
+
+<!-- ============ SECTION 2: ISSUE ============ -->
+<h2>二、Issue（问题 / 需求跟踪）</h2>
+<p>Issue 是 GitHub 的"任务系统"。提 bug、提需求、讨论方案都用它。</p>
+
+<div class="feature-card">
+  <h3><span class="badge badge-issue">issue</span> 从创建到关闭全流程</h3>
+
+  <h3>2.1 创建 Issue（网页操作）</h3>
+  <div class="step"><span class="step-num">1</span><span>打开 <code>https://github.com/magicrain1979/ci-cd-demo/issues</code></span></div>
+  <div class="step"><span class="step-num">2</span><span>点击绿色 <b>New issue</b> 按钮</span></div>
+  <div class="step"><span class="step-num">3</span><span>标题示例：<code>加法计算器结果不准确</code></span></div>
+  <div class="step"><span class="step-num">4</span><span>正文用 Markdown 描述，可贴代码、截图</span></div>
+
+  <h3>2.2 Issue 正文模板（Markdown）</h3>
+  <pre><code>## 描述
+add(0.1, 0.2) 返回 0.30000000000000004，期望 0.3
+
+## 复现步骤
+1. 运行 `node src/index.js`
+2. 调用 `add(0.1, 0.2)`
+
+## 期望行为
+返回 0.3
+
+## 环境
+- Node.js v20
+- Windows 11</code></pre>
+
+  <h3>2.3 用 gh 命令操作 Issue</h3>
+  <pre><code># 创建 issue
+gh issue create --title "修复浮点数精度问题" --body "add(0.1,0.2) 精度不准"
+
+# 列出所有 issue
+gh issue list
+
+# 查看某个 issue（#1 是编号）
+gh issue view 1
+
+# 关闭 issue
+gh issue close 1</code></pre>
+
+  <div class="tip">
+    <strong>Issue 怎么关？</strong> 在 commit 信息里写 <code>fixes #1</code> 或 <code>closes #1</code>，代码合并后 Issue 自动关闭。也可以在网页上手动点 Close issue。
+  </div>
+</div>
+
+<!-- ============ SECTION 3: PULL REQUEST ============ -->
+<h2>三、Pull Request（拉取请求 / 代码审查）</h2>
+<p>PR 是 GitHub 的灵魂。你改了代码 → 发起 PR → 别人审查 → 测试通过 → 合并到主分支。</p>
+
+<div class="feature-card">
+  <h3><span class="badge badge-pr">pull request</span> 实战：从分支到合并</h3>
+
+  <h3>3.1 完整流程（命令 + 网页）</h3>
+  <pre><code># ① 创建功能分支
+git checkout -b fix/floating-point
+
+# ② 修改代码... 然后提交
+git add src/index.js
+git commit -m "fix: 修复浮点数加法精度问题，fixes #1"
+git push -u origin fix/floating-point
+
+# ③ 去网页创建 PR：
+#    https://github.com/magicrain1979/ci-cd-demo/pulls
+#    点击 New pull request
+#    base: master  ← compare: fix/floating-point
+#    填写标题和描述，点击 Create pull request</code></pre>
+
+  <h3>3.2 PR 描述模板</h3>
+  <pre><code>## 改动内容
+使用 Number.EPSILON 处理浮点数比较，解决精度问题
+
+## 测试
+- add(0.1, 0.2) → 0.3 ✓
+- 原有测试全部通过
+
+## 关联 Issue
+Closes #1</code></pre>
+
+  <h3>3.3 审查与合并</h3>
+  <pre><code># 审查者可以在线添加评论，点 + 号选行评论
+
+# 所有检查通过后，合并方式有三种：
+# ① Merge commit    — 保留完整历史（推荐团队项目）
+# ② Squash & merge  — 多条 commit 压成一条（推荐个人项目）
+# ③ Rebase & merge  — 线性历史，不产生 merge commit
+
+# 合并后，删除远程分支
+git push origin --delete fix/floating-point
+
+# 本地切回主分支并同步
+git checkout master
+git pull</code></pre>
+
+  <h3>3.4 用 gh 命令操作 PR</h3>
+  <pre><code># 创建 PR（push 分支后）
+gh pr create --title "修复浮点数精度" --body "Closes #1"
+
+# 列出 PR
+gh pr list
+
+# 查看 PR 详情和 CI 状态
+gh pr view
+
+# 合并 PR
+gh pr merge --squash
+
+# 查看某个 PR 的 checks（CI 状态）
+gh pr checks</code></pre>
+</div>
+
+<!-- ============ SECTION 4: ACTIONS ============ -->
+<h2>四、Actions（CI/CD 自动化）</h2>
+<p>代码 push 或提 PR 时，自动跑测试、构建、部署。配置写在 <code>.github/workflows/</code> 目录下。</p>
+
+<div class="feature-card">
+  <h3><span class="badge badge-ci">actions</span> 你的 ci-cd-demo 项目就是他</h3>
+
+  <h3>4.1 查看流水线运行</h3>
+  <pre><code># 在网页上
+https://github.com/magicrain1979/ci-cd-demo/actions
+# 点进每次运行，可以看到每一步的实时日志
+
+# 用命令查看
+gh run list                          # 列出最近的运行
+gh run view                          # 交互式选择查看某次运行
+gh run watch                         # 实时看日志滚动</code></pre>
+
+  <h3>4.2 手动触发</h3>
+  <pre><code>gh workflow run "CI/CD Pipeline"   # 手动触发一次</code></pre>
+
+  <h3>4.3 CI 失败时怎么排查</h3>
+  <div class="step"><span class="step-num">1</span><span>打开 Actions页面，点红色的运行记录</span></div>
+  <div class="step"><span class="step-num">2</span><span>展开失败的 job，查看哪一步红了</span></div>
+  <div class="step"><span class="step-num">3</span><span>点开那一步，看终端输出日志</span></div>
+  <div class="step"><span class="step-num">4</span><span>根据日志提示修代码，commit + push，自动重跑</span></div>
+
+  <h3>4.4 你的 ci.yml 解读</h3>
+  <pre><code>name: CI/CD Pipeline          # 流水线名称
+
+on:                           # 什么时候触发
+  push:
+    branches: [main]          # push 到 main 时
+  pull_request:
+    branches: [main]          # 提 PR 到 main 时
+
+jobs:
+  ci:                         # 一个叫 ci 的任务
+    runs-on: ubuntu-latest    # 在 Ubuntu 虚拟机上跑
+    steps:                    # 按顺序执行
+      - uses: actions/checkout@v4      # 拉代码
+      - uses: actions/setup-node@v4    # 装 Node.js
+      - run: npm install               # 装依赖
+      - run: npm run lint              # 代码检查
+      - run: npm run build             # 构建
+      - run: npm test                  # 跑测试</code></pre>
+</div>
+
+<!-- ============ SECTION 5: OTHER ============ -->
+<h2>五、其他常用功能速查</h2>
+
+<div class="feature-card">
+  <h3><span class="badge badge-other">wiki</span> Wiki — 项目文档</h3>
+  <p>每个仓库自带一个 Wiki，适合放项目文档、API 说明、会议纪要。</p>
+  <pre><code># 网址（需要有内容才会显示Tab）
+https://github.com/magicrain1979/ci-cd-demo/wiki</code></pre>
+</div>
+
+<div class="feature-card">
+  <h3><span class="badge badge-other">projects</span> Projects — 看板管理</h3>
+  <p>类似 Trello，用看板管理 Issue 和 PR 的状态（Todo → In Progress → Done）。</p>
+  <pre><code># 网址
+https://github.com/users/magicrain1979/projects</code></pre>
+</div>
+
+<div class="feature-card">
+  <h3><span class="badge badge-other">release</span> Release — 版本发布</h3>
+  <p>代码稳定后打一个 Release，附带更新日志和下载包。</p>
+  <pre><code># 打 tag
+git tag v1.0.0
+git push --tags
+
+# 创建 Release（网页或命令）
+gh release create v1.0.0 --title "v1.0.0 首次发布" --notes "新增加减乘除功能"</code></pre>
+</div>
+
+<div class="feature-card">
+  <h3><span class="badge badge-other">discussion</span> Discussions — 社区讨论</h3>
+  <p>与代码无关的讨论放这里：方案脑暴、使用问题、公告等。需在仓库设置里开启。</p>
+  <pre><code>https://github.com/magicrain1979/ci-cd-demo/discussions</code></pre>
+</div>
+
+<div class="feature-card">
+  <h3><span class="badge badge-other">settings</span> 仓库设置要点</h3>
+  <table>
+    <tr><th>设置项</th><th>位置</th><th>说明</th></tr>
+    <tr><td>默认分支</td><td>Settings → General → Default branch</td><td>通常设为 main 或 master</td></tr>
+    <tr><td>分支保护</td><td>Settings → Branches → Add rule</td><td>要求 PR 必须审查、CI 必须通过</td></tr>
+    <tr><td>Actions 权限</td><td>Settings → Actions → General</td><td>控制谁能触发 CI</td></tr>
+    <tr><td>Collaborators</td><td>Settings → Collaborators</td><td>添加团队成员</td></tr>
+  </table>
+</div>
+
+<!-- ============ SECTION 6: CHEATSHEET ============ -->
+<h2>六、命令速查表</h2>
+
+<table>
+  <tr><th>场景</th><th>命令</th></tr>
+  <tr><td>克隆仓库</td><td><code>git clone https://github.com/用户/仓库.git</code></td></tr>
+  <tr><td>创建分支并切换</td><td><code>git checkout -b 分支名</code></td></tr>
+  <tr><td>暂存+提交</td><td><code>git add . && git commit -m "信息"</code></td></tr>
+  <tr><td>推送</td><td><code>git push</code> / <code>git push -u origin 分支名</code></td></tr>
+  <tr><td>拉取最新代码</td><td><code>git pull</code></td></tr>
+  <tr><td>查看状态</td><td><code>git status</code></td></tr>
+  <tr><td>查看提交历史</td><td><code>git log --oneline</code></td></tr>
+  <tr><td>撤销未暂存的改动</td><td><code>git checkout -- 文件名</code></td></tr>
+  <tr><td>合并分支</td><td><code>git merge 分支名</code></td></tr>
+  <tr><td>创建 Issue (gh)</td><td><code>gh issue create --title "标题" --body "描述"</code></td></tr>
+  <tr><td>创建 PR (gh)</td><td><code>gh pr create --title "标题" --body "描述"</code></td></tr>
+  <tr><td>查看 Actions (gh)</td><td><code>gh run list</code></td></tr>
+</table>
+
+<div class="tip" style="margin-top:32px;">
+  <strong>上手建议</strong>：先去 <code>https://github.com/magicrain1979/ci-cd-demo</code> 创建仓库，把本地代码 push 上去。然后依次尝试：创建一个 Issue、开一个分支修它、提 PR、看 Actions 跑、合并。走完一遍，GitHub 怎么用就全明白了。
+</div>
+
+<p style="text-align:center;color:var(--text2);font-size:12px;margin-top:48px;">GitHub 核心操作指南 · 以 ci-cd-demo 为实例 · 2026.06</p>
+
+</body>
+</html>
